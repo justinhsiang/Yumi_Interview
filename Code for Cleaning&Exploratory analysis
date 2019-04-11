@@ -1,0 +1,71 @@
+#initializing the fields in the data
+cardata = data
+library(dplyr)
+library(tree)
+View(cardata)
+cardata = cardata[,2:13]
+
+##CLEANING/EXPLORATORY ANALYSIS
+##Following data sets all characters to actual dates and NA's
+cardata$signup_date<-as.Date(cardata$signup_date,"%Y-%m-%d")
+cardata$bgc_date <- as.Date(cardata$bgc_date, "%Y-%m-%d")
+cardata$vehicle_added_date <- as.Date(cardata$vehicle_added_date, "%Y-%m-%d")
+cardata$first_completed_date <- as.Date(cardata$first_completed_date,"%Y-%m-%d")
+cardata$vehicle_year = as.integer(cardata$vehicle_year)
+
+## removed all the data that is faulty 
+## ie) had NA for vehicle added date and had non-NA values for vehicle make,model and year
+cardata <- cardata[!(is.na(cardata$vehicle_added_date) == TRUE & (is.na(cardata$vehicle_make) == FALSE | 
+                                  is.na(cardata$vehicle_model) == FALSE | is.na(cardata$vehicle_year) == FALSE)),]
+
+## Adds a column saying whether first ride is completed or not completed
+cardata = mutate(cardata, Completed = factor(ifelse(is.na(completed) == TRUE, "not completed","completed")))
+
+## Counting how many people completed background check, added their vehicle, and made their first trip
+bgcCompleted = nrow(cardata) - sum(is.na(cardata$bgc_date))
+vehicleaddedCompleted = nrow(cardata) - sum(is.na(cardata$vehicle_added_date))
+completedCount =nrow(cardata) - sum(is.na(cardata$first_completed_date))
+completedCount/nrow(cardata)
+## 11.2416% of people that signed up made their first trip
+logit = glm(Completed ~ ., data = cardata, family = "binomial")
+## Tried to use logistic regression model since it works via classification
+
+cartree = tree(Completed ~ ., data = cardata)
+draw.tree(cartree)
+##
+
+
+##auxiliary variables amount of days between each sign up and the frequency of these days
+cardata$su_bgc <- cardata$bgc_date - cardata$signup_date
+cardata$su_bgc <- as.integer(cardata$su_bgc)
+cardata$su_v <- cardata$vehicle_added_date - cardata$signup_date
+cardata$su_v <- as.integer(cardata$su_v)
+cardata$su_c <- cardata$first_completed_date - cardata$signup_date
+cardata$su_c <- as.integer(cardata$su_c)
+num_signups_event <- c(bgcCompleted, vehicleaddedCompleted, completedCount)
+##histograms of frequence in which time between signups and other important dates such as
+## background check date, vehicle added date and the date of first completed ride
+hist(cardata$su_bgc, main = "Histogram of the time between signups and background check")
+hist(cardata$su_v, main = "Histogram of the time between signups and vehicle added date")
+hist(cardata$su_c, main = "Histogram of the time between signups and first completed date")
+barplot(num_signups_event, main = "Count for number of people that completed bgc, added vehicle and
+        first ride completed")
+##Very clear that through the data that there is a signifcant drop in people between signup and 
+##background check, signup and vehicle added and signup and first completed date.
+## In addition the frequencey of the days become closer and closer throughout the dates as
+## the difference between each milestone day 
+plot(cardata$Completed,cardata$su_bgc)
+plot(cardata$Completed,cardata$su_v)
+## Shows that the number of completed has some correlation with how fast the back ground check
+## was completed
+analysis<- cbind(cardata[,12],cardata[,11])
+hist(cardata$su_c)
+hist(cardata$su_bgc)
+summary(cardata)
+head(cardata)
+tail(cardata)
+glimpse(cardata)
+ggpairs(data = cardata, columns=11:14, title = "cardata")
+##using these graphs that show the relations between the number of completed first trips 
+##and the difference in days between sign up and back ground check, sign up and date vehicle added
+## and difference between day of completion. 
