@@ -27,12 +27,6 @@ vehicleaddedCompleted = nrow(cardata) - sum(is.na(cardata$vehicle_added_date))
 completedCount =nrow(cardata) - sum(is.na(cardata$first_completed_date))
 completedCount/nrow(cardata)
 ## 11.2416% of people that signed up made their first trip
-logit = glm(Completed ~ ., data = cardata, family = "binomial")
-## Tried to use logistic regression model since it works via classification
-
-cartree = tree(Completed ~ ., data = cardata)
-draw.tree(cartree)
-##
 
 
 ##auxiliary variables amount of days between each sign up and the frequency of these days
